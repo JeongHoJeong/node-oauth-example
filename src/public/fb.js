@@ -1,4 +1,3 @@
-// TODO: initialize Facebook SDK
 window.fbAsyncInit = () => {
   FB.init({
     appId: APP_CONFIG.FB_APP_ID,
@@ -8,14 +7,12 @@ window.fbAsyncInit = () => {
   document.getElementById('fb-login').addEventListener('click', () => {
     FB.login(
       (response) => {
-        // handle the response
-        console.log(response)
         fetch(
           `/users/auth/facebook?access_token=${response.authResponse.accessToken}`,
           {
             method: 'POST',
           }
-        )
+        ).then(() => window.location.reload())
       },
       { scope: 'public_profile,email' }
     )
