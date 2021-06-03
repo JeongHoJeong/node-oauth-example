@@ -12,14 +12,21 @@ const FB_CLIENT_SECRET = process.env.FB_CLIENT_SECRET
 
 /**
  * @param {string} facebookId
+ * @param {string} name
  * @returns {Promise<string>}
  */
-async function createUserWithFacebookIdAndGetId(facebookId) {
+async function createUserWithFacebookProfileAndGetId({
+  id: facebookId,
+  name,
+  picture,
+}) {
   const users = await getUsersCollection()
   const userId = uuidv4()
   await users.insertOne({
     id: userId,
     facebookId,
+    name,
+    picture,
   })
   return userId
 }
@@ -28,7 +35,7 @@ async function createUserWithFacebookIdAndGetId(facebookId) {
  * @param {string} accessToken
  * @returns {Promise<string>}
  */
-async function getFacebookIdFromAccessToken(accessToken) {
+async function getFacebookProfileFromAccessToken(accessToken) {
   // https://developers.facebook.com/docs/facebook-login/access-tokens/#generating-an-app-access-token
   // https://developers.facebook.com/docs/graph-api/reference/v10.0/debug_token
   const appAccessTokenReq = await fetch(
@@ -45,7 +52,12 @@ async function getFacebookIdFromAccessToken(accessToken) {
     throw new Error('Not a valid access token.')
   }
 
-  return debugResult.data.user_id
+  const facebookId = debugResult.data.user_id
+
+  const profileRes = await fetch(
+    `https://graph.facebook.com/${facebookId}?fields=id,name,picture&access_token=${accessToken}`
+  )
+  return profileRes.json()
 }
 
 /**
@@ -70,7 +82,8 @@ async function getUserIdWithFacebookId(facebookId) {
  * @param {string} token
  */
 async function getUserAccessTokenForFacebookAccessToken(token) {
-  const facebookId = await getFacebookIdFromAccessToken(token)
+  const fbProfile = await getFacebookProfileFromAccessToken(token)
+  const { id: facebookId } = fbProfile
   const existingUserId = await getUserIdWithFacebookId(facebookId)
 
   // 2. 해당 Facebook ID에 해당하는 유저가 데이터베이스에 있는 경우
@@ -79,14 +92,14 @@ async function getUserAccessTokenForFacebookAccessToken(token) {
   }
 
   // 1. 해당 Facebook ID에 해당하는 유저가 데이터베이스에 없는 경우
-  const userId = await createUserWithFacebookIdAndGetId(facebookId)
+  const userId = await createUserWithFacebookProfileAndGetId(fbProfile)
   return getAccessTokenForUserId(userId)
 }
 
 module.exports = {
   FB_APP_ID,
   FB_CLIENT_SECRET,
-  getFacebookIdFromAccessToken,
+  getFacebookProfileFromAccessToken,
   getUserIdWithFacebookId,
   getUserAccessTokenForFacebookAccessToken,
 }

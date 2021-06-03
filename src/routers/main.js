@@ -8,7 +8,9 @@ const router = express.Router()
 router.get('/', (req, res) => {
   res.render('index', {
     // @ts-ignore
-    userId: req.userId,
+    userId: req.user?.id,
+    userName: req.user?.name,
+    userProfile: req.user?.picture?.data?.url,
     APP_CONFIG_JSON: JSON.stringify({
       FB_APP_ID,
     }).replace(/"/g, '\\"'),

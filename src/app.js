@@ -29,7 +29,7 @@ app.use(async (req, res, next) => {
         })
         if (user) {
           // @ts-ignore
-          req.userId = user.id
+          req.user = user
         }
       }
     } catch (e) {
