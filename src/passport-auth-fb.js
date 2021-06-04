@@ -18,7 +18,7 @@ function setupFBAuth(app) {
       {
         clientID: FB_APP_ID,
         clientSecret: FB_CLIENT_SECRET,
-        callbackURL: '', // TODO: Use correct callback URL
+        callbackURL: 'https://9e363d675aa4.ngrok.io/passport/facebook/callback',
       },
       (accessToken, refreshToken, profile, done) => {
         done(null, {
@@ -47,11 +47,8 @@ function setupFBAuth(app) {
 
   app.get(
     '/passport/facebook/callback',
-    passport.authenticate('facebook', {
-      session: false,
-    }),
+    passport.authenticate('facebook', { session: false }),
     async (req, res) => {
-      // @ts-ignore
       const fbAccessToken = req.user?.facebook?.accessToken
       if (fbAccessToken) {
         const accessToken = await getUserAccessTokenForFacebookAccessToken(
